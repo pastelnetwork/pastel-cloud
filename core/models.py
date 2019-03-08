@@ -13,7 +13,7 @@ class User(AbstractUser):
 
 class UserProfile(models.Model):
     short_bio = models.TextField(blank=True)
-    picture = models.ImageField(null=True, blank=True)
+    picture = models.TextField(null=True, blank=True)  # base64 image
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
 
     def __str__(self):
