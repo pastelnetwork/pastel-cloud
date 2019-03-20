@@ -11,11 +11,22 @@ class User(AbstractUser):
             self.profile = UserProfile.objects.create(user=self)
 
 
+class Address(models.Model):
+    country = models.CharField(max_length=64, null=True, blank=True)
+    state = models.CharField(max_length=64, null=True, blank=True)
+    city = models.CharField(max_length=64, null=True, blank=True)
+    street = models.CharField(max_length=64, null=True, blank=True)
+    postal_code = models.CharField(max_length=64, null=True, blank=True)
+    number = models.CharField(max_length=64, null=True, blank=True)
+
+
 class UserProfile(models.Model):
     short_bio = models.TextField(blank=True)
     picture = models.TextField(null=True, blank=True, db_index=False)  # base64 image
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     phone_number = models.CharField(max_length=32, null=True, blank=True)
+    billing_address = models.OneToOneField(Address, null=True, blank=True, on_delete=models.SET_NULL,
+                                           related_name='profile')
 
     @property
     def first_name(self):

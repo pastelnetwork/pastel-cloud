@@ -1,10 +1,15 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from core.models import User, UserProfile
+from core.models import User, UserProfile, Address
 
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
+    pass
+
+
+@admin.register(Address)
+class AddressAdmin(admin.ModelAdmin):
     pass
 
 
