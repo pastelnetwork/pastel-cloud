@@ -8,6 +8,7 @@ class CustomUserAdmin(UserAdmin):
     pass
 
 
+# TODO: display image converted from base64 as <img>
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     pass
