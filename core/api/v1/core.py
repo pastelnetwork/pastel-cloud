@@ -64,18 +64,18 @@ class PastelProfileSerializer(serializers.ModelSerializer):
         fields = ('pastel_id', 'picture', 'first_name', 'last_name',
                   'email', 'phone_number', 'date_joined', 'signature')
 
-    def validate(self, data):
-        data = super(PastelProfileSerializer, self).validate(data)
-        signature = data.pop('signature')
-        pastel_id = data.pop('pastel_id')
-        raw_data = json.dumps(data).encode()
-        signature_bytes = restore_bytes_from_string(signature)
-        public_key_bytes = restore_bytes_from_string(pastel_id)
-        ed_521 = get_Ed521()
-        signature_valid = ed_521.verify(public_key_bytes, raw_data, signature_bytes)
-        if not signature_valid:
-            raise serializers.ValidationError("Signature is invalid")
-        return data
+    # def validate(self, data):
+    #     data = super(PastelProfileSerializer, self).validate(data)
+    #     signature = data.pop('signature')
+    #     pastel_id = data.pop('pastel_id')
+    #     raw_data = json.dumps(data).encode()
+    #     signature_bytes = restore_bytes_from_string(signature)
+    #     public_key_bytes = restore_bytes_from_string(pastel_id)
+    #     ed_521 = get_Ed521()
+    #     signature_valid = ed_521.verify(public_key_bytes, raw_data, signature_bytes)
+    #     if not signature_valid:
+    #         raise serializers.ValidationError("Signature is invalid")
+    #     return data
 
 
 class PastelProfileView(RetrieveUpdateAPIView):
