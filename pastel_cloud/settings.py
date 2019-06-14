@@ -127,11 +127,11 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
     ),
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',
+    'DEFAULT_AUTHENTICATION_CLASSES': tuple(
+        # 'rest_framework.authentication.TokenAuthentication',
     ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+    'DEFAULT_PERMISSION_CLASSES': tuple(
+        # 'rest_framework.permissions.IsAuthenticated',
     ),
     'TIME_FORMAT': '%H:%M:%S',
     'TIME_INPUT_FORMATS': ['%H:%M:%S']

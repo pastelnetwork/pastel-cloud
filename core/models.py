@@ -54,3 +54,16 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return '{} profile'.format(self.user.username)
+
+
+class PastelIDProfile(models.Model):
+    pastel_id = models.CharField(max_length=512, unique=True)
+    first_name = models.CharField(max_length=128, null=True, blank=True)
+    last_name = models.CharField(max_length=128, null=True, blank=True)
+    picture = models.TextField(null=True, blank=True, db_index=False)  # base64 image
+    phone_number = models.CharField(max_length=32, null=True, blank=True)
+    email = models.CharField(max_length=128, null=True, blank=True)
+    date_joined = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.pastel_id
