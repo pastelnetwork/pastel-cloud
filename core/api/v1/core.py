@@ -1,5 +1,7 @@
 import json
 import base64
+from collections import OrderedDict
+
 from rest_framework import serializers
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -11,6 +13,12 @@ from blackblox_modules.crypto import get_Ed521
 def restore_bytes_from_string(pk_string):
     bytes_encoded = pk_string.encode()
     return base64.b64decode(bytes_encoded)
+
+
+def ordered_json_string_from_dict(data):
+    sorted_data = sorted(data.items(), key=lambda x: x[0])
+    ordered = OrderedDict(sorted_data)
+    return json.dumps(ordered)
 
 
 class AddressSerializer(serializers.ModelSerializer):
@@ -64,18 +72,21 @@ class PastelProfileSerializer(serializers.ModelSerializer):
         fields = ('pastel_id', 'picture', 'first_name', 'last_name',
                   'email', 'phone_number', 'date_joined', 'signature')
 
-    # def validate(self, data):
-    #     data = super(PastelProfileSerializer, self).validate(data)
-    #     signature = data.pop('signature')
-    #     pastel_id = data.pop('pastel_id')
-    #     raw_data = json.dumps(data).encode()
-    #     signature_bytes = restore_bytes_from_string(signature)
-    #     public_key_bytes = restore_bytes_from_string(pastel_id)
-    #     ed_521 = get_Ed521()
-    #     signature_valid = ed_521.verify(public_key_bytes, raw_data, signature_bytes)
-    #     if not signature_valid:
-    #         raise serializers.ValidationError("Signature is invalid")
-    #     return data
+    def validate(self, data):
+        data = super(PastelProfileSerializer, self).validate(data)
+        signature = data.pop('signature')
+        pastel_id = data.pop('pastel_id')
+        dd = ordered_json_string_from_dict(data)
+        print(dd)
+        raw_data = dd.encode()
+
+        signature_bytes = restore_bytes_from_string(signature)
+        public_key_bytes = restore_bytes_from_string(pastel_id)
+        ed_521 = get_Ed521()
+        signature_valid = ed_521.verify(public_key_bytes, raw_data, signature_bytes)
+        if not signature_valid:
+            raise serializers.ValidationError("Signature is invalid")
+        return data
 
 
 class PastelProfileView(RetrieveUpdateAPIView):
