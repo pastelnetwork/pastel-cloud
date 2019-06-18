@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from core.models import User, UserProfile, Address
+from core.models import User, UserProfile, Address, PastelIDProfile
 
 
 @admin.register(User)
@@ -16,4 +16,9 @@ class AddressAdmin(admin.ModelAdmin):
 # TODO: display image converted from base64 as <img>
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(PastelIDProfile)
+class PastelIDProfileAdmin(admin.ModelAdmin):
     pass

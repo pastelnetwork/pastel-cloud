@@ -70,7 +70,7 @@ class PastelProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = PastelIDProfile
         fields = ('pastel_id', 'picture', 'first_name', 'last_name',
-                  'email', 'phone_number', 'date_joined', 'signature')
+                  'email', 'phone_number', 'date_joined_for_human', 'signature')
 
     def validate(self, data):
         data = super(PastelProfileSerializer, self).validate(data)
@@ -90,15 +90,22 @@ class PastelProfileSerializer(serializers.ModelSerializer):
 
 
 class PastelProfileView(RetrieveUpdateAPIView):
+    """
+    Trick for transport pastel public key in request data:
+    POST is used to fetch profile,
+    PUT/PATCH - to update it.
+    """
     serializer_class = PastelProfileSerializer
     # permission_classes = (IsAuthenticated,)
 
     def get_object(self):
-        if self.request.method == 'GET':
-            pastel_id = self.request.GET.get('pastel_id')
-        else:
-            pastel_id = self.request.data.get('pastel_id')
+        pastel_id = self.request.data.get('pastel_id')
 
         pastel_id_profile, _ = PastelIDProfile.objects.get_or_create(pastel_id=pastel_id)
         return pastel_id_profile
 
+    def get(self, request, *args, **kwargs):
+        return self.http_method_not_allowed(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)

@@ -65,5 +65,9 @@ class PastelIDProfile(models.Model):
     email = models.CharField(max_length=128, null=True, blank=True)
     date_joined = models.DateTimeField(auto_now=True)
 
+    @property
+    def date_joined_for_human(self):
+        return self.date_joined.strftime('%b %d %Y')
+
     def __str__(self):
         return self.pastel_id
