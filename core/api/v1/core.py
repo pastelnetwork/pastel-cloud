@@ -1,5 +1,6 @@
 import json
 import base64
+import hashlib
 from collections import OrderedDict
 
 from rest_framework import serializers
@@ -66,16 +67,25 @@ class UserProfileView(RetrieveUpdateAPIView):
 
 class PastelProfileSerializer(serializers.ModelSerializer):
     signature = serializers.CharField(write_only=True)
+    picture_hash = serializers.CharField(write_only=True)
 
     class Meta:
         model = PastelIDProfile
         fields = ('pastel_id', 'picture', 'first_name', 'last_name',
-                  'email', 'phone_number', 'date_joined_for_human', 'signature')
+                  'email', 'phone_number', 'date_joined_for_human', 'signature', 'picture_hash')
 
     def validate(self, data):
         data = super(PastelProfileSerializer, self).validate(data)
         signature = data.pop('signature')
         pastel_id = data.pop('pastel_id')
+        picture = None
+        if 'picture' in data:
+            picture = data.pop('picture')
+            picture_hash = data.get('picture_hash')
+            if not picture_hash:
+                raise serializers.ValidationError("'picture' field included but 'picture_hash' is absent")
+            if picture_hash != hashlib.md5(picture.encode('utf-8')).hexdigest():
+                raise serializers.ValidationError("Picture hash is incorrect")
         dd = ordered_json_string_from_dict(data)
         print(dd)
         raw_data = dd.encode()
@@ -86,6 +96,9 @@ class PastelProfileSerializer(serializers.ModelSerializer):
         signature_valid = ed_521.verify(public_key_bytes, raw_data, signature_bytes)
         if not signature_valid:
             raise serializers.ValidationError("Signature is invalid")
+        # Now when validation is complete we put picture back on its place
+        if picture:
+            data['picture'] = picture
         return data
 
 
