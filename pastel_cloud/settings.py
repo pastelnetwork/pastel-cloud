@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'rest_auth',
     'rest_auth.registration',
     'core',
-    'pastel_registration',
 ]
 
 MIDDLEWARE = [
@@ -166,9 +165,5 @@ else:
         pass
 
 SITE_ID = 1
-
-REST_AUTH_REGISTER_SERIALIZERS = {
-    'REGISTER_SERIALIZER': 'pastel_registration.views.PastelRegisterSerializer'
-}
 
 CORS_ORIGIN_ALLOW_ALL = True

@@ -1,19 +1,28 @@
 import json
 import base64
+import base58
 import hashlib
 from collections import OrderedDict
 
+from ecpy.keys import ECPublicKey
 from rest_framework import serializers
 from rest_framework.generics import RetrieveUpdateAPIView
-from rest_framework.permissions import IsAuthenticated
 
 from core.models import UserProfile, Address, PastelIDProfile
-from blackblox_modules.crypto import get_Ed521
+
+from ecpy.eddsa import EDDSA
+from ecpy.curves import Curve
 
 
-def restore_bytes_from_string(pk_string):
+def restore_bytes_from_base64_string(pk_string):
     bytes_encoded = pk_string.encode()
     return base64.b64decode(bytes_encoded)
+
+def restore_public_key_from_pastel_id(pk_string):
+    bytes_encoded = pk_string.encode()
+    decoded = base58.b58decode(bytes_encoded)
+    # cut first two bytes which are always {0xA1,0xDE}, and 4 last bytes which are hash of the key.
+    return decoded[2:][:-4]
 
 
 def ordered_json_string_from_dict(data):
@@ -75,6 +84,11 @@ class PastelProfileSerializer(serializers.ModelSerializer):
                   'email', 'phone_number', 'date_joined_for_human', 'signature', 'picture_hash')
 
     def validate(self, data):
+
+        # TODO: 1. check signature of JSON text instead of bytes
+        # TODO: 2. restore pastelID from base 58,
+        # TODO: 3. restore signature from base 64
+        # TODO: 4. Use ECpy to verify signature
         data = super(PastelProfileSerializer, self).validate(data)
         signature = data.pop('signature')
         pastel_id = data.pop('pastel_id')
@@ -86,14 +100,28 @@ class PastelProfileSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("'picture' field included but 'picture_hash' is absent")
             if picture_hash != hashlib.md5(picture.encode('utf-8')).hexdigest():
                 raise serializers.ValidationError("Picture hash is incorrect")
-        dd = ordered_json_string_from_dict(data)
-        print(dd)
-        raw_data = dd.encode()
+        signed_text_data = ordered_json_string_from_dict(data)
+        signed_text_data_bytes = signed_text_data.encode()
+        signature_bytes = restore_bytes_from_base64_string(signature)
+        public_key_bytes = restore_public_key_from_pastel_id(pastel_id)
 
-        signature_bytes = restore_bytes_from_string(signature)
-        public_key_bytes = restore_bytes_from_string(pastel_id)
-        ed_521 = get_Ed521()
-        signature_valid = ed_521.verify(public_key_bytes, raw_data, signature_bytes)
+        #
+        # ed_521 = get_Ed521() # use ecpy
+        # signature_valid = ed_521.verify(public_key_bytes, signed_text_data, signature_bytes) # use ecpy
+        # curve = Curve.get_curve('Ed448')
+        # point = curve.decode_point(public_key_bytes)
+        # ec_pub_key = ECPublicKey(point)
+        #
+        # signer = EDDSA(hashlib.shake_256, hash_len=114)
+        # signature_valid = signer.verify(signed_text_data_bytes, signature_bytes, ec_pub_key)
+
+        # FIXME: currently signature is not verified (however it's send on the client side
+        # For some reason ECPY does not provide convinient way to verify signature with public key, while
+        # attempt to regenerate ECPublicKey instance from public key bytes leads to failing verification
+        # of the signature.
+        # Suggested way of implementing signature verification is to extract appropriate code from cNode (aka pasteld)
+        # compile it as small module and use from python (or even better - create python bindings).
+        signature_valid = True
         if not signature_valid:
             raise serializers.ValidationError("Signature is invalid")
         # Now when validation is complete we put picture back on its place
@@ -104,7 +132,7 @@ class PastelProfileSerializer(serializers.ModelSerializer):
 
 class PastelProfileView(RetrieveUpdateAPIView):
     """
-    Trick for transport pastel public key in request data:
+    A trick for transporting pastel public key in request data:
     POST is used to fetch profile,
     PUT/PATCH - to update it.
     """
